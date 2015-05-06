@@ -564,11 +564,14 @@ void rtlsdr_set_i2c_repeater(rtlsdr_dev_t *dev, int on)
 	rtlsdr_demod_write_reg(dev, 1, 0x01, on ? 0x18 : 0x10, 1);
 }
 
-int rtlsdr_set_fir(rtlsdr_dev_t *dev)
+int rtlsdr_set_fir(rtlsdr_dev_t *dev, int *half_fir)
 {
 	uint8_t fir[20];
-
 	int i;
+
+	if (half_fir != dev->fir)
+		memcpy(dev->fir, half_fir, sizeof(dev->fir));
+
 	/* format: int8_t[8] */
 	for (i = 0; i < 8; ++i) {
 		const int val = dev->fir[i];
@@ -597,6 +600,12 @@ int rtlsdr_set_fir(rtlsdr_dev_t *dev)
 	return 0;
 }
 
+int rtlsdr_get_fir(rtlsdr_dev_t *dev, int *half_fir)
+{
+	memcpy(half_fir, dev->fir, sizeof(dev->fir));
+	return 0;
+}
+
 void rtlsdr_init_baseband(rtlsdr_dev_t *dev)
 {
 	unsigned int i;
@@ -622,7 +631,7 @@ void rtlsdr_init_baseband(rtlsdr_dev_t *dev)
 	for (i = 0; i < 6; i++)
 		rtlsdr_demod_write_reg(dev, 1, 0x16 + i, 0x00, 1);
 
-	rtlsdr_set_fir(dev);
+	rtlsdr_set_fir(dev, dev->fir);
 
 	/* enable SDR mode, disable DAGC (bit 5) */
 	rtlsdr_demod_write_reg(dev, 0, 0x19, 0x05, 1);

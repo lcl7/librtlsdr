@@ -64,6 +64,29 @@ RTLSDR_API int rtlsdr_open(rtlsdr_dev_t **dev, uint32_t index);
 
 RTLSDR_API int rtlsdr_close(rtlsdr_dev_t *dev);
 
+/*!
+ * Load the FIR LPF coefficients in RTL2832 chip.
+ *
+ * \param dev the device handle given by rtlsdr_open().
+ * \param half_fir an array of FIR_LEN integers with the first half of the FIR LPF coefficients.
+ *        The second half will be the mirror of the first half.
+ * Values of the first  8 half_fir coefficients are limited to range [-128 .. 127]
+ * Values of the second 8 half_fir coefficients are limited to range [-2048 .. 2047]
+ */
+RTLSDR_API int rtlsdr_set_fir(rtlsdr_dev_t *dev, int *half_fir);
+
+/*!
+ * Get the FIR LPF coefficients which have been loaded in the RTL2832 chip.
+ *
+ * The values are not read back from the chip, but from the buffer of the most
+ * recent rtlsdr_set_fir() call (or initialization).
+ *
+ * \param dev the device handle given by rtlsdr_open().
+ * \param half_fir an array of FIR_LEN integers to store the FIR LPF coefficients.
+ *        The second half is always a mirror of the first half.
+ */
+RTLSDR_API int rtlsdr_get_fir(rtlsdr_dev_t *dev, int *half_fir);
+
 /* configuration functions */
 
 /*!
