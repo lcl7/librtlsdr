@@ -1730,6 +1730,15 @@ static int _rtlsdr_free_async_buffers(rtlsdr_dev_t *dev)
 	return 0;
 }
 
+static rtlsdr_user_idle_cb_t read_async_idle_fun;
+static void *read_async_idle_fun_data;
+
+void rtlsdr_set_async_idle_fun(rtlsdr_user_idle_cb_t idle_fun, void *idle_fun_data)
+{
+	read_async_idle_fun = idle_fun;
+	read_async_idle_fun_data = idle_fun_data;
+}
+
 int rtlsdr_read_async(rtlsdr_dev_t *dev, rtlsdr_read_async_cb_t cb, void *ctx,
 			  uint32_t buf_num, uint32_t buf_len)
 {
@@ -1781,6 +1790,11 @@ int rtlsdr_read_async(rtlsdr_dev_t *dev, rtlsdr_read_async_cb_t cb, void *ctx,
 		}
 	}
 
+	if (read_async_idle_fun) {
+		/* Force zerotv for the first call, then let idle fun set the timeout. */
+		tv = zerotv;
+	}
+
 	while (RTLSDR_INACTIVE != dev->async_status) {
 		r = libusb_handle_events_timeout_completed(dev->ctx, &tv,
 							   &dev->async_cancel);
@@ -1823,6 +1837,14 @@ int rtlsdr_read_async(rtlsdr_dev_t *dev, rtlsdr_read_async_cb_t cb, void *ctx,
 				libusb_handle_events_timeout_completed(dev->ctx,
 								       &zerotv, NULL);
 				break;
+			}
+		}
+
+		if (read_async_idle_fun) {
+			tv = read_async_idle_fun(read_async_idle_fun_data);
+			if (tv.tv_sec > 1) {
+				tv.tv_sec  = 1;
+				tv.tv_usec = 0;
 			}
 		}
 	}

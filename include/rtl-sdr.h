@@ -331,6 +331,24 @@ RTLSDR_API int rtlsdr_read_sync(rtlsdr_dev_t *dev, void *buf, int len, int *n_re
 typedef void(*rtlsdr_read_async_cb_t)(unsigned char *buf, uint32_t len, void *ctx);
 
 /*!
+ * Type for user function to be called after servicing the usb events.
+ *
+ * \return a struct timeval for the maximum sleep-time before calling it again.
+ */
+typedef struct timeval (*rtlsdr_user_idle_cb_t)(void *data);
+
+/*!
+ * Set idle function to be called after servicing the usb events (by rtlsdr_read_async()).
+ *
+ * The idle function should return a struct timeval for the maximum sleep-time before
+ * calling it again.
+ *
+ * \param idle_fun the function to be called, or NULL for none.
+ * \param idle_fun_data the data pointer to be passed to the idle function.
+ */
+RTLSDR_API void rtlsdr_set_async_idle_fun(rtlsdr_user_idle_cb_t idle_fun, void *idle_fun_data);
+
+/*!
  * Read samples from the device asynchronously. This function will block until
  * it is being canceled using rtlsdr_cancel_async()
  *
